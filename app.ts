@@ -11,6 +11,13 @@ const crops: Array<{ id: CropId; label: string }> = [
 ];
 export const app = fastify({ logger: true });
 
-app.register(cors, { origin: true });
+// Enhanced CORS configuration for mobile apps
+app.register(cors, {
+  origin: true, // Allow all origins (including React Native apps)
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  exposedHeaders: ["Content-Length", "Date"],
+});
 
 app.register(registerRoutes);

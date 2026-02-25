@@ -11,6 +11,27 @@ import { calculateDosePerHole, convertKgToBags } from "../utils/conversions";
 
 const DEFAULT_AREA_HA = 1;
 const DEFAULT_MAIZE_SPACING = { rowSpacingM: 0.75, plantSpacingM: 0.25 };
+const DEFAULT_TOMATO_SPACING = { rowSpacingM: 1.0, plantSpacingM: 0.5 };
+const DEFAULT_CABBAGE_SPACING = { rowSpacingM: 0.6, plantSpacingM: 0.5 };
+const DEFAULT_COFFEE_SPACING = { rowSpacingM: 2.5, plantSpacingM: 1.0 };
+
+const getCropSpacing = (
+  crop: CropId,
+  customSpacing?: { rowSpacingM: number; plantSpacingM: number },
+): { rowSpacingM: number; plantSpacingM: number } => {
+  if (customSpacing) return customSpacing;
+
+  switch (crop) {
+    case "maize":
+      return DEFAULT_MAIZE_SPACING;
+    case "tomato":
+      return DEFAULT_TOMATO_SPACING;
+    case "cabbage":
+      return DEFAULT_CABBAGE_SPACING;
+    case "coffee":
+      return DEFAULT_COFFEE_SPACING;
+  }
+};
 
 const soilLabels: Record<SoilType, string> = {
   acidic: "Solo acido",
@@ -24,11 +45,12 @@ export const buildRecommendation = (input: {
   answers: SoilAnswer[];
   areaHa?: number;
   maizeSpacing?: { rowSpacingM: number; plantSpacingM: number };
+  spacing?: { rowSpacingM: number; plantSpacingM: number };
 }): RecommendationResult => {
   const { crop, provinceId, answers } = input;
   const areaHa =
     input.areaHa && input.areaHa > 0 ? input.areaHa : DEFAULT_AREA_HA;
-  const maizeSpacing = input.maizeSpacing ?? DEFAULT_MAIZE_SPACING;
+  const spacing = getCropSpacing(crop, input.spacing ?? input.maizeSpacing);
   const assumptions: string[] = [];
 
   if (!input.areaHa || input.areaHa <= 0) {
@@ -39,11 +61,16 @@ export const buildRecommendation = (input: {
   const rule = cropRecommendations[crop][soilType];
   const totalKg = Math.round(rule.baseRateKgHa * areaHa * 10) / 10;
 
-  if (crop === "maize") {
-    assumptions.push(
-      `Espacamento do milho assumido como ${maizeSpacing.rowSpacingM}m x ${maizeSpacing.plantSpacingM}m.`,
-    );
-  }
+  const cropLabels: Record<CropId, string> = {
+    maize: "milho",
+    tomato: "tomate",
+    cabbage: "repolho",
+    coffee: "cafe",
+  };
+
+  assumptions.push(
+    `Espacamento do ${cropLabels[crop]} assumido como ${spacing.rowSpacingM}m x ${spacing.plantSpacingM}m.`,
+  );
 
   const notes = [soilLabels[soilType], ...rule.notes];
   if (rule.limeSuggested) {
@@ -64,9 +91,8 @@ export const buildRecommendation = (input: {
     assumptions,
   };
 
-  if (crop === "maize") {
-    result.perHoleDose = calculateDosePerHole(rule.baseRateKgHa, maizeSpacing);
-  }
+  // Calcular dosagem por cova/celula para todas as culturas
+  result.perHoleDose = calculateDosePerHole(rule.baseRateKgHa, spacing);
 
   return result;
 };
