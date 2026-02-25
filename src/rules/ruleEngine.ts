@@ -34,9 +34,9 @@ const getCropSpacing = (
 };
 
 const soilLabels: Record<SoilType, string> = {
-  acidic: "Solo acido",
-  sandy: "Solo arenoso",
-  medium: "Fertilidade media",
+  acidic: "Solo Ácido",
+  sandy: "Solo Arenoso",
+  medium: "Solo com Boa Fertilidade",
 };
 
 export const buildRecommendation = (input: {
