@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { z } from "zod";
+import { treeifyError, z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["dev", "test", "production"]).default("dev"),
@@ -9,7 +9,10 @@ const envSchema = z.object({
 
 const _env = envSchema.safeParse(process.env);
 if (_env.success === false) {
-  console.log("Invalid format environment variables: ", _env.error.format());
+  console.log(
+    "Invalid format environment variables: ",
+    treeifyError(_env.error),
+  );
   throw new Error("Invalid format environment variables");
 }
 
